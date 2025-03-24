@@ -1,0 +1,107 @@
+from flask import Flask, request, send_file, render_template_string
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import os
+from io import BytesIO
+
+app = Flask(__name__)
+
+HTML_FORM = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>easypartsexport.com</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>easypartsexport.com</h2>
+        <form method="post">
+            <label for="url">Enter OEM Parts Page URL:</label><br><br>
+            <input type="text" id="url" name="url" required><br><br>
+            <input type="submit" value="Scrape Parts">
+        </form>
+    </div>
+</body>
+</html>
+"""
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        url = request.form['url']
+
+        try:
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+        except Exception as e:
+            return f"Error loading page: {e}"
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        rows = soup.select("div.c1a")
+        part_data = []
+
+        for index, row in enumerate(rows):
+            try:
+                part = row.get_text(strip=True)
+                parent = row.find_parent()
+
+                part_number_elem = parent.select_one("span.itemnum")
+                part_number = part_number_elem.get_text(strip=True) if part_number_elem else ""
+
+                qty_input = parent.select_one("input.qtyinput")
+                qty = qty_input.get("value").strip() if qty_input else "1"
+
+                if part:
+                    part_data.append({"Ref#": str(index + 1), "Part": part, "Part Number": part_number, "QTY": qty})
+            except:
+                continue
+
+        if not part_data:
+            return "No part data found. Please check the URL and try again."
+
+        df = pd.DataFrame(part_data)
+        output = BytesIO()
+        df.to_excel(output, index=False)
+        output.seek(0)
+
+        return send_file(output, download_name="oem_parts.xlsx", as_attachment=True)
+
+    return render_template_string(HTML_FORM)
+
+if __name__ == '__main__':
+    app.run(debug=True)
