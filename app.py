@@ -63,7 +63,10 @@ HTML_FORM = """
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        url = request.form['url']
+        user_url = request.form['url']
+
+        proxy_api_key = os.environ.get("SCRAPERAPI_KEY", "YOUR_API_KEY")  # Replace with your actual key or use environment variable
+        proxy_url = f"http://api.scraperapi.com/?api_key={proxy_api_key}&url={user_url}"
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
@@ -73,7 +76,7 @@ def index():
         }
 
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(proxy_url, headers=headers)
             response.raise_for_status()
         except Exception as e:
             return f"Error loading page: {e}"
