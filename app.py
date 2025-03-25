@@ -65,7 +65,6 @@ def index():
     if request.method == 'POST':
         user_url = request.form['url']
 
-        # Using your actual ScraperAPI key directly
         proxy_api_key = "912edbad515aab7b8ac3a49cab1bd4c2"
         proxy_url = f"http://api.scraperapi.com/?api_key={proxy_api_key}&url={user_url}&render=true"
 
@@ -83,23 +82,27 @@ def index():
             return f"Error loading page: {e}"
 
         soup = BeautifulSoup(response.text, 'html.parser')
-        rows = soup.select("div.c1a")
         part_data = []
 
-        for index, row in enumerate(rows):
+        part_rows = soup.select("table.oem-part-table tbody tr")
+        for row in part_rows:
             try:
-                part = row.get_text(strip=True)
-                parent = row.find_parent()
+                columns = row.find_all("td")
+                if len(columns) >= 4:
+                    ref = columns[0].get_text(strip=True)
+                    part_name = columns[1].get_text(strip=True)
+                    part_number_elem = columns[1].find("a")
+                    part_number = part_number_elem.get_text(strip=True) if part_number_elem else ""
+                    qty_input = columns[3].find("input")
+                    qty = qty_input.get("value") if qty_input else "1"
 
-                part_number_elem = parent.select_one("span.itemnum")
-                part_number = part_number_elem.get_text(strip=True) if part_number_elem else ""
-
-                qty_input = parent.select_one("input.qtyinput")
-                qty = qty_input.get("value").strip() if qty_input else "1"
-
-                if part:
-                    part_data.append({"Ref#": str(index + 1), "Part": part, "Part Number": part_number, "QTY": qty})
-            except:
+                    part_data.append({
+                        "Ref#": ref,
+                        "Part": part_name,
+                        "Part Number": part_number,
+                        "QTY": qty
+                    })
+            except Exception as e:
                 continue
 
         if not part_data:
