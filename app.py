@@ -65,8 +65,8 @@ def index():
     if request.method == 'POST':
         user_url = request.form['url']
 
-        # TEMP: Replace this with your actual ScraperAPI key
-        proxy_api_key = "your_actual_scraperapi_key_here"
+        # Using your actual ScraperAPI key directly
+        proxy_api_key = "912edbad515aab7b8ac3a49cab1bd4c2"
         proxy_url = f"http://api.scraperapi.com/?api_key={proxy_api_key}&url={user_url}&render=true"
 
         headers = {
