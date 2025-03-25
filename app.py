@@ -65,7 +65,8 @@ def index():
     if request.method == 'POST':
         user_url = request.form['url']
 
-        proxy_api_key = os.environ.get("SCRAPERAPI_KEY", "YOUR_API_KEY")  # Replace with your actual key or use environment variable
+        # TEMP: Replace this with your actual ScraperAPI key
+        proxy_api_key = "your_actual_scraperapi_key_here"
         proxy_url = f"http://api.scraperapi.com/?api_key={proxy_api_key}&url={user_url}&render=true"
 
         headers = {
