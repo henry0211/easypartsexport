@@ -66,7 +66,7 @@ def index():
         user_url = request.form['url']
 
         proxy_api_key = "912edbad515aab7b8ac3a49cab1bd4c2"
-        proxy_url = f"http://api.scraperapi.com/?api_key={proxy_api_key}&url={user_url}&render=true"
+        proxy_url = f"http://api.scraperapi.com/?api_key={proxy_api_key}&url={user_url}&country=us&retry=3"
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
